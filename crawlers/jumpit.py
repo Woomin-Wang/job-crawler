@@ -1,7 +1,7 @@
 import requests
 from config import SEARCH_CONFIG
 
-BASE_URL = "https://jumpit.saramin.co.kr/api/positions"
+BASE_URL = "https://jumpit-api.saramin.co.kr/api/positions"
 
 HEADERS = {
     "User-Agent": "Mozilla/5.0",
@@ -14,8 +14,9 @@ JOB_CATEGORY = 1  # 서버/백엔드 개발자
 
 def fetch_jobs() -> list:
     params = {
-        "sort": "rsp_rate",
+        "sort": "popular",
         "jobCategory": JOB_CATEGORY,
+        "highlight": "false",
         "page": 1,
     }
 
@@ -29,6 +30,9 @@ def fetch_jobs() -> list:
 
     jobs = []
     for item in data.get("result", {}).get("positions", []):
+        if not item.get("newcomer"):
+            continue
+
         locations = item.get("locations", [])
         if not any("서울" in loc for loc in locations):
             continue
