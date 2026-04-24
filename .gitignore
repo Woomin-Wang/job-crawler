@@ -1,0 +1,6 @@
+.env
+__pycache__/
+*.pyc
+.idea/
+storage/seen_jobs.json
+{crawlers,notifier,storage}/
