@@ -1,7 +1,6 @@
 import requests
-from config import SEARCH_CONFIG
 
-BASE_URL = "https://www.wanted.co.kr/api/v4/jobs"
+BASE_URL = "https://www.wanted.co.kr/api/chaos/navigation/v1/results"
 
 HEADERS = {
     "User-Agent": "Mozilla/5.0",
@@ -9,16 +8,17 @@ HEADERS = {
     "wanted-user-country": "KR",
 }
 
-# 백엔드 직군 코드
-JOB_CATEGORY_TAG = 872  # 서버/백엔드
+JOB_GROUP_ID = 518      # IT 개발 그룹
+BACKEND_CATEGORY_ID = 872  # 서버/백엔드
+
 
 def fetch_jobs() -> list:
-    jobs = []
     params = {
-        "job_category_tag_id": JOB_CATEGORY_TAG,
+        "job_group_id": JOB_GROUP_ID,
         "country": "kr",
         "job_sort": "job.latest_order",
-        "years": 0,  # 신입
+        "years": 0,
+        "locations": "seoul.all",
         "limit": 100,
         "offset": 0,
     }
@@ -31,20 +31,16 @@ def fetch_jobs() -> list:
         print(f"[원티드] 요청 실패: {e}")
         return []
 
+    jobs = []
     for item in data.get("data", []):
-        location = item.get("address", {}).get("location", "")
-        if "서울" not in location:
-            continue
-
-        title = item.get("position", "")
-        if not any(k.lower() in title.lower() for k in SEARCH_CONFIG["keywords"]):
+        if item.get("category_tag", {}).get("id") != BACKEND_CATEGORY_ID:
             continue
 
         jobs.append({
             "id": str(item.get("id")),
-            "title": title,
+            "title": item.get("position", ""),
             "company": item.get("company", {}).get("name", ""),
-            "location": location,
+            "location": item.get("address", {}).get("location", ""),
             "skills": [],
             "deadline": item.get("due_time", "상시") or "상시",
             "url": f"https://www.wanted.co.kr/wd/{item.get('id')}",

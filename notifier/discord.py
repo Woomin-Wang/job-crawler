@@ -3,9 +3,9 @@ from datetime import datetime
 from config import DISCORD_WEBHOOK_URL
 
 SOURCE_COLORS = {
-    "원티드": 0x5865F2,
-    "사람인": 0x57F287,
-    "점핏":   0xFEE75C,
+    "원티드": 0x258BF5,
+    "사람인": 0xFF4D4D,
+    "점핏":   0x845EF7,
 }
 
 
@@ -22,20 +22,36 @@ def _format_deadline(deadline: str) -> str:
 def _build_embed(job: dict) -> dict:
     source = job.get("source", "")
     skills = job.get("skills", [])
-    skill_text = "  ".join(f"`{s}`" for s in skills) if skills else "정보 없음"
     deadline = _format_deadline(job.get("deadline", "상시"))
+    location = job.get("location", "")
 
-    return {
+    description = f"🏢 **{job['company']}**\n📍 {location}　·　📅 ~ {deadline}"
+
+    embed = {
         "color": SOURCE_COLORS.get(source, 0x5865F2),
         "author": {"name": source},
-        "title": f"{job['company']} — {job['title']}",
+        "title": job["title"],
         "url": job.get("url", ""),
-        "fields": [
-            {"name": "기술스택", "value": skill_text, "inline": False},
-            {"name": "📍 위치", "value": job.get("location", ""), "inline": True},
-            {"name": "📅 마감", "value": f"~ {deadline}", "inline": True},
-        ],
+        "description": description,
     }
+
+    if skills:
+        embed["fields"] = [
+            {
+                "name": "🛠 기술스택",
+                "value": "  ".join(f"`{s}`" for s in skills),
+                "inline": False,
+            }
+        ]
+
+    return embed
+
+
+def _build_content(jobs: list) -> str:
+    from collections import Counter
+    counts = Counter(job["source"] for job in jobs)
+    summary = "  |  ".join(f"{src} {cnt}건" for src, cnt in counts.items())
+    return f"🔔 **새 공고 {len(jobs)}건** — {summary}"
 
 
 def send(jobs: list):
@@ -46,13 +62,11 @@ def send(jobs: list):
         print("[디스코드] DISCORD_WEBHOOK_URL 환경변수가 없습니다.")
         return
 
-    # 디스코드 embed 최대 10개 제한
     for i in range(0, len(jobs), 10):
         chunk = jobs[i:i + 10]
-        embeds = [_build_embed(job) for job in chunk]
         payload = {
-            "content": f"🆕 새 공고 {len(jobs)}건" if i == 0 else None,
-            "embeds": embeds,
+            "content": _build_content(jobs) if i == 0 else None,
+            "embeds": [_build_embed(job) for job in chunk],
         }
 
         try:
