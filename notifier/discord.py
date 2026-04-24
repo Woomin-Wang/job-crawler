@@ -25,7 +25,7 @@ def _build_embed(job: dict) -> dict:
     deadline = _format_deadline(job.get("deadline", "상시"))
     location = job.get("location", "")
 
-    description = f"🏢 **{job['company']}**\n📍 {location}　·　📅 ~ {deadline}"
+    description = f"🏢 **{job['company']}**\n\n📍 {location}　·　📅 ~ {deadline}\n"
 
     embed = {
         "color": SOURCE_COLORS.get(source, 0x5865F2),
