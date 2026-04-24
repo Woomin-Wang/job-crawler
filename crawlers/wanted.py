@@ -32,32 +32,22 @@ def fetch_jobs() -> list:
         return []
 
     for item in data.get("data", []):
-        job = item.get("job", {})
-        company = job.get("company", {})
-        address = job.get("address", {})
-
-        # 서울 필터
-        location = address.get("location", "")
+        location = item.get("address", {}).get("location", "")
         if "서울" not in location:
             continue
 
-        # Java or Spring 키워드 필터
-        skills = [s.get("skill_tag", {}).get("title", "") for s in job.get("skill_tags", [])]
-        title = job.get("title", "")
-        desc = job.get("description", "")
-        text = " ".join(skills) + " " + title + " " + desc
-
-        if not any(k.lower() in text.lower() for k in SEARCH_CONFIG["keywords"]):
+        title = item.get("position", "")
+        if not any(k.lower() in title.lower() for k in SEARCH_CONFIG["keywords"]):
             continue
 
         jobs.append({
-            "id": str(job.get("id")),
+            "id": str(item.get("id")),
             "title": title,
-            "company": company.get("name", ""),
+            "company": item.get("company", {}).get("name", ""),
             "location": location,
-            "skills": skills[:5],
-            "deadline": job.get("due_time", "상시") or "상시",
-            "url": f"https://www.wanted.co.kr/wd/{job.get('id')}",
+            "skills": [],
+            "deadline": item.get("due_time", "상시") or "상시",
+            "url": f"https://www.wanted.co.kr/wd/{item.get('id')}",
             "source": "원티드",
         })
 
